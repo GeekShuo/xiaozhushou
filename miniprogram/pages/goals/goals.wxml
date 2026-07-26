@@ -1,0 +1,17 @@
+<view class="title">我的目标</view>
+<view class="muted">点「切换」把当前目标换过去;点「新建」进入多轮共创。</view>
+
+<view wx:for="{{goals}}" wx:key="id" class="card">
+  <view class="row">
+    <view>
+      <view class="title">{{item.title}}</view>
+      <view class="muted">{{item.status === 'draft' ? '共创中' : '进行中'}}</view>
+    </view>
+    <view wx:if="{{item.status === 'active'}}" bindtap="onSwitch" data-id="{{item.id}}" class="btn" style="width:160rpx;margin:0;">切换</view>
+  </view>
+</view>
+
+<view class="card">
+  <textarea placeholder="立个目标,比如:三个月瘦 8 斤" value="{{text}}" bindinput="onInput" />
+  <view class="btn" bindtap="onNew">开始共创</view>
+</view>

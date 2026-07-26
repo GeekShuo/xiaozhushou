@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 本地密钥与运行时数据（不要提交）
+src/config.json
+*.db
+*.sqlite
+*.sqlite3
+
+# 操作系统
+.DS_Store
+Thumbs.db

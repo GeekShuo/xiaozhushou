@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小助手 · AI 人生教练</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="toast" class="toast hidden"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">🌱 小助手</div>
+      <nav>
+        <button class="nav-item active" data-view="goal">🎯 目标</button>
+        <button class="nav-item" data-view="plan">🗂️ 计划</button>
+        <button class="nav-item" data-view="chat">💬 对话</button>
+        <button class="nav-item" data-view="calendar">📅 日历</button>
+        <button class="nav-item" data-view="checkin">✅ 打卡</button>
+        <button class="nav-item" data-view="progress">📈 进度</button>
+        <button class="nav-item" data-view="settings">⚙️ 设置</button>
+      </nav>
+      <div class="persona-box">
+        <div class="persona-label">当前教练</div>
+        <div id="personaName" class="persona-name">—</div>
+        <div id="personaTag" class="persona-tag"></div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <!-- 目标 -->
+      <section class="view active" id="view-goal">
+        <h1>立一个"宏大"的目标</h1>
+        <p class="sub">越空越好——"减肥""赚钱""学 AI 编程"。我会先和你多聊几句,把目标问清楚,再生成一份可量化的计划。</p>
+
+        <div id="goalList" class="goal-list"></div>
+
+        <div class="goal-new">
+          <textarea id="goalInput" placeholder="例如:我想三个月内瘦下来,还想顺便学点 AI 编程"></textarea>
+          <button id="goalBtn" class="primary">开始共创(多轮对话)</button>
+        </div>
+
+        <h3 class="mt">选择你的 AI 教练人设</h3>
+        <div id="personaChips" class="chips"></div>
+      </section>
+
+      <!-- 计划 -->
+      <section class="view" id="view-plan">
+        <h1>落地计划</h1>
+        <p class="sub">每天只跟"今天那一件最小的事"较劲。勾掉做完的,觉得太难/太松就告诉我。</p>
+        <div id="planList" class="plan-list"></div>
+        <div class="adapt-box">
+          <input id="adaptInput" placeholder="反馈:比如「太难了,减少点」或「太简单,加点量」" />
+          <button id="adaptBtn">调整计划</button>
+        </div>
+      </section>
+
+      <!-- 对话 -->
+      <section class="view" id="view-chat">
+        <h1>和教练聊聊</h1>
+        <div id="onboardBanner" class="onboard-banner hidden">🤝 我们正在共创目标,把信息补全,我就能生成专属计划。</div>
+        <div id="chatBox" class="chat-box"></div>
+        <div class="chat-input">
+          <label class="img-btn" title="发图片(如吃饭拍照)">📷
+            <input id="chatImg" type="file" accept="image/*" hidden />
+          </label>
+          <img id="imgPrev" class="img-prev hidden" alt="预览" />
+          <input id="chatInput" placeholder="吐槽、汇报进展、问下一步、或发张饭图给我看看…" />
+          <button id="chatSend">发送</button>
+        </div>
+      </section>
+
+      <!-- 日历 -->
+      <section class="view" id="view-calendar">
+        <h1>日历</h1>
+        <p class="sub">所有目标的每日任务都汇到这里。点某天看当天要做什么。</p>
+        <div class="cal-head">
+          <button id="calPrev">‹</button>
+          <span id="calTitle"></span>
+          <button id="calNext">›</button>
+        </div>
+        <div id="calGrid" class="cal-grid"></div>
+        <div id="calInfo" class="cal-info"></div>
+      </section>
+
+      <!-- 打卡 -->
+      <section class="view" id="view-checkin">
+        <h1>每日打卡</h1>
+        <p class="sub">诚实就好。今天状态如何?</p>
+        <div class="moods">
+          <button class="mood" data-mood="great">😄 不错</button>
+          <button class="mood" data-mood="ok">😐 还行</button>
+          <button class="mood" data-mood="bad">😩 拉胯</button>
+        </div>
+        <div id="checkinTasks" class="checkin-tasks"></div>
+        <textarea id="checkinNote" placeholder="今天发生了什么?有什么阻碍或收获?"></textarea>
+        <button id="checkinBtn" class="primary">提交打卡</button>
+      </section>
+
+      <!-- 进度 / 粘性 -->
+      <section class="view" id="view-progress">
+        <h1>进度与粘性</h1>
+        <p class="sub">押金退款机制:先押一笔(虚拟币),连续签到达标后全额退还——用"沉没成本"把你拽回来每天打卡。</p>
+        <div id="memberCard" class="member-card"></div>
+        <div class="subscribe-box hidden" id="subBox">
+          <span>押金(虚拟币)</span>
+          <input id="depInput" type="number" min="1" value="21" />
+          <button id="subBtn">开通(押金)</button>
+        </div>
+
+        <h3 class="mt">教练的长期观察</h3>
+        <p class="sub">每天/每周自动把你的进展压成结构化摘要,跨天跨周都记得你——这是接真 LLM 后的长期记忆底座。</p>
+        <div id="summaryList" class="summary-list"></div>
+      </section>
+
+      <!-- 设置 -->
+      <section class="view" id="view-settings">
+        <h1>设置</h1>
+        <p class="sub">选择 AI 引擎。填好 API Key 后自动切换为真实大模型(兼容 OpenAI / DeepSeek / 通义 / 本地 Ollama 等)。留空则继续用内置模板(离线可用)。</p>
+
+        <div class="setting-row">
+          <label>引擎模式</label>
+          <select id="cfgEngine">
+            <option value="auto">自动(有 Key 用真实模型,否则用内置模板)</option>
+            <option value="mock">仅内置模板(离线)</option>
+            <option value="llm">强制真实模型</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>API Base URL</label>
+          <input id="cfgBase" placeholder="https://api.deepseek.com/v1" />
+        </div>
+        <div class="setting-row">
+          <label>模型名</label>
+          <input id="cfgModel" placeholder="deepseek-chat" />
+        </div>
+        <div class="setting-row">
+          <label>API Key</label>
+          <input id="cfgKey" type="password" autocomplete="off" placeholder="留空则不修改已保存的 Key" />
+        </div>
+        <div class="setting-row">
+          <label>温度 (0–2)</label>
+          <input id="cfgTemp" type="number" step="0.1" min="0" max="2" />
+        </div>
+        <div class="setting-row">
+          <label>看图(Vision)</label>
+          <select id="cfgVision">
+            <option value="false">关闭(文本模型)</option>
+            <option value="true">开启(需支持视觉的模型,如 deepseek-vl)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>教练人设</label>
+          <select id="cfgPersona"></select>
+        </div>
+
+        <div id="cfgStatus" class="cfg-status"></div>
+        <button id="cfgSave" class="primary">保存并重载引擎</button>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

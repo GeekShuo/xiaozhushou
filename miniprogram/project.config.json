@@ -1,0 +1,15 @@
+{
+  "description": "小助手 AI 人生教练 - 微信小程序前端(未来载体)",
+  "packOptions": { "ignore": [], "include": [] },
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "appid": "touristappid",
+  "projectname": "xiaozhushou-miniprogram",
+  "condition": {}
+}

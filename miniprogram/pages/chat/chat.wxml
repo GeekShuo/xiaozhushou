@@ -1,0 +1,12 @@
+<view wx:if="{{onboarding}}" class="muted">🤝 正在共创目标,把信息补全我就生成计划。</view>
+
+<scroll-view scroll-y style="height:70vh;">
+  <view wx:for="{{msgs}}" wx:key="index" class="card">
+    <view class="{{item.role === 'user' ? 'title' : 'muted'}}">{{item.content}}</view>
+  </view>
+</scroll-view>
+
+<view class="row card">
+  <input placeholder="说点什么…" value="{{input}}" bindinput="onInput" style="flex:1;" />
+  <view class="btn" style="width:140rpx;margin:0 0 0 16rpx;" bindtap="onSend">发送</view>
+</view>

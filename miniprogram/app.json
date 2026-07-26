@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/goals/goals",
+    "pages/chat/chat",
+    "pages/calendar/calendar"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#0f1419",
+    "navigationBarTitleText": "小助手",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f1419"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

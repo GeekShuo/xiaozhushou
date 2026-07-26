@@ -1,0 +1,120 @@
+"""入口:默认启动 PyWebView 桌面窗口;加 --web 则以 HTTP Web 服务模式启动(浏览器可访问)。
+
+Web 模式会额外暴露一个 JSON API(POST /api {name, args}),前端在检测不到 pywebview 时自动回退到该接口,
+因此同一套前端既能在桌面窗口运行,也能在浏览器里检查。
+"""
+from __future__ import annotations
+import os
+import sys
+import socket
+import argparse
+
+# 确保 src/ 在路径中,保证 `from backend.xxx` 可用
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import webview
+from backend.api import API
+
+INDEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "index.html")
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _free_port() -> int:
+    """让系统分配一个当前空闲的端口,避免端口冲突。"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("127.0.0.1", 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def run_web(port: int = 0):
+    import http.server
+    import json
+
+    api = API()  # Web 模式不启动桌面通知调度(避免跨线程访问 DB),提醒增删查仍可用
+    frontend_dir = os.path.join(HERE, "frontend")
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *a, **kw):
+            super().__init__(*a, directory=frontend_dir, **kw)
+
+        def _send_json(self, obj, status: int = 200):
+            data = json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_POST(self):
+            if self.path.split("?")[0] == "/api":
+                length = int(self.headers.get("Content-Length", 0) or 0)
+                raw = self.rfile.read(length) if length else b"{}"
+                try:
+                    payload = json.loads(raw.decode("utf-8") or "{}")
+                except Exception:
+                    payload = {}
+                name = payload.get("name")
+                args = payload.get("args") or []
+                try:
+                    if (not isinstance(name, str)
+                            or name.startswith("_")
+                            or not hasattr(api, name)
+                            or not callable(getattr(api, name))):
+                        raise ValueError(f"未知或不可调用的方法: {name}")
+                    result = getattr(api, name)(*(args or []))
+                    self._send_json({"result": result})
+                except Exception as e:  # 任何异常都返回给前端,不崩服务
+                    self._send_json({"error": str(e)}, status=400)
+            else:
+                self.send_error(404)
+
+        def log_message(self, *a):  # 静默
+            pass
+
+    if not port:
+        port = _free_port()
+    server = http.server.ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    url = f"http://127.0.0.1:{port}"
+    # 把访问地址写到文件,方便脚本/用户直接拿到(后台启动时不会刷屏)
+    try:
+        with open(os.path.join(os.path.dirname(HERE), "web_url.txt"), "w", encoding="utf-8") as f:
+            f.write(url)
+    except Exception:
+        pass
+    print(f"\n✅ 小助手已启动(Web 模式): {url}")
+    print("   按 Ctrl+C 停止。\n")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description="小助手 · AI 人生教练")
+    parser.add_argument("--web", action="store_true", help="以 HTTP Web 服务模式启动(浏览器可访问)")
+    parser.add_argument("--port", type=int, default=0, help="Web 模式监听端口(0=自动选空闲端口)")
+    args = parser.parse_args()
+
+    if args.web:
+        run_web(args.port)
+        return
+
+    # 默认:PyWebView 桌面窗口
+    api = API()
+    window = webview.create_window(
+        title="小助手 · AI 人生教练",
+        url=INDEX,
+        js_api=api,
+        width=1080,
+        height=720,
+        min_size=(900, 600),
+    )
+
+    webview.start(gui=None)
+
+
+if __name__ == "__main__":
+    main()

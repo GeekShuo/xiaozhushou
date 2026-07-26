@@ -1,0 +1,11 @@
+<view class="row card">
+  <view class="btn" style="width:100rpx;margin:0;" bindtap="prev">‹</view>
+  <view class="title">{{year}}年{{month}}月</view>
+  <view class="btn" style="width:100rpx;margin:0;" bindtap="next">›</view>
+</view>
+
+<view class="card">
+  <view wx:for="{{cells}}" wx:key="index" class="{{item.empty ? '' : 'title'}}">
+    <block wx:if="{{!item.empty}}">{{item.day}}{{item.count ? ' ·'+item.count : ''}}{{item.today ? ' ★' : ''}}</block>
+  </view>
+</view>
