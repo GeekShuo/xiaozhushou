@@ -26,17 +26,24 @@ set LIFECOACH_LLM_MODEL=deepseek-chat
 ```
 
 ## 技术栈
-- 桌面壳: **PyWebView**(Python 后端 + 本地 HTML/JS 前端,真实窗口,可打包 exe)
+- 部署形态: **纯 Web 服务**(Python 标准库 http.server + 静态前端),无桌面依赖,可配合 Cloudflare Tunnel 对外提供
 - 存储: **SQLite**(目标 / 计划 / 任务 / 打卡 / 反馈)
 - 提醒: 后台线程轮询 + 系统通知(plyer),应用内也有提醒横幅
 - 前端: 原生 HTML/CSS/JS,无构建步骤
 
-## 运行
+## 运行(Web 模式)
 ```bash
-pip install -r requirements.txt
-python src/main.py
+pip install -r requirements.txt   # 现在仅需标准库,此步通常可省略
+python src/main.py --port 8787     # 默认监听 127.0.0.1:8787(8000 在部分 Windows 上被系统保留,被占用换其它端口即可)
 ```
-> Windows 需要 Edge WebView2 运行时(Windows 10/11 自带)。
+浏览器打开 http://127.0.0.1:8000 即可使用。
+
+### 让同学 / 外网访问(Cloudflare Tunnel)
+本机无需公网 IP,安装 `cloudflared` 后一行命令把本地端口暴露到公网:
+```bash
+cloudflared tunnel --url http://localhost:8000
+```
+终端会给出一个 `https://xxxx.trycloudflare.com` 域名,发给同学即可访问(电脑需保持运行)。
 
 ## 目录结构
 ```
@@ -78,15 +85,10 @@ AI 能"看"图给饮食建议;文本模型下会优雅提示无法看图。
 
 ## 运行
 
-桌面模式:
+Web 模式(纯浏览器,已移除桌面 GUI):
 ```bash
-pip install -r requirements.txt
-python src/main.py
-```
-浏览器模式(便于检查 / 给小程序当后端,自动选空闲端口):
-```bash
-python src/main.py --web
-# 或指定端口: python src/main.py --web --port 8080
+python src/main.py --port 8787
+# 自动选空闲端口: python src/main.py
 ```
 
 ## 微信小程序(未来载体)

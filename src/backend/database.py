@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 import os
 import time
+import json
 from typing import Optional
 
 from .models import Goal, Phase, CheckIn, ChatMessage, plan_to_json, plan_from_json
@@ -143,6 +144,17 @@ class Database:
         c.execute("UPDATE goals SET profile_json=? WHERE id=?", (profile_json, gid))
         self.conn.commit()
 
+    def delete_goal(self, gid: int):
+        """彻底删除目标及其全部关联数据(计划/打卡/对话/提醒/摘要/会员)。"""
+        c = self.conn.cursor()
+        for table in ("plans", "checkins", "chat", "reminders", "summaries", "membership"):
+            try:
+                c.execute(f"DELETE FROM {table} WHERE goal_id=?", (gid,))
+            except Exception:
+                pass
+        c.execute("DELETE FROM goals WHERE id=?", (gid,))
+        self.conn.commit()
+
     @staticmethod
     def _row_to_goal(row) -> Optional[Goal]:
         if not row:
@@ -200,8 +212,37 @@ class Database:
 
     def list_reminders(self, goal_id: int) -> list[dict]:
         c = self.conn.cursor()
-        c.execute("SELECT * FROM reminders WHERE goal_id=?", (goal_id,))
+        c.execute("SELECT * FROM reminders WHERE goal_id=? ORDER BY cron_hour, cron_min", (goal_id,))
         return [dict(r) for r in c.fetchall()]
+
+    def clear_reminders(self, goal_id: int):
+        """重建计划时先清空旧提醒,避免重复叠加。"""
+        c = self.conn.cursor()
+        c.execute("DELETE FROM reminders WHERE goal_id=?", (goal_id,))
+        self.conn.commit()
+
+    def update_reminder(self, rid: int, hour: int | None = None, minute: int | None = None,
+                        enabled: int | None = None) -> bool:
+        c = self.conn.cursor()
+        sets, vals = [], []
+        if hour is not None:
+            sets.append("cron_hour=?"); vals.append(int(hour))
+        if minute is not None:
+            sets.append("cron_min=?"); vals.append(int(minute))
+        if enabled is not None:
+            sets.append("enabled=?"); vals.append(1 if enabled else 0)
+        if not sets:
+            return False
+        vals.append(rid)
+        c.execute(f"UPDATE reminders SET {', '.join(sets)} WHERE id=?", vals)
+        self.conn.commit()
+        return c.rowcount > 0
+
+    def delete_reminder(self, rid: int) -> bool:
+        c = self.conn.cursor()
+        c.execute("DELETE FROM reminders WHERE id=?", (rid,))
+        self.conn.commit()
+        return c.rowcount > 0
 
     def mark_fired(self, rid: int):
         c = self.conn.cursor()
@@ -268,6 +309,15 @@ class Database:
                   (goal_id, deposit, threshold, time.time()))
         self.conn.commit()
 
+    def open_deposit(self, goal_id: int, deposit: int, threshold: int):
+        """开通/更新押金挑战:保留已有连续天数,重置退还状态。"""
+        self.ensure_membership(goal_id, deposit, threshold)
+        c = self.conn.cursor()
+        c.execute("UPDATE membership SET deposit=?, threshold=?, refunded=0 WHERE goal_id=?",
+                  (deposit, threshold, goal_id))
+        self.conn.commit()
+        return self.get_membership(goal_id)
+
     def record_checkin_streak(self, goal_id: int, today_str: str) -> dict:
         import datetime as _dt
         m = self.get_membership(goal_id)
@@ -283,7 +333,8 @@ class Database:
             consecutive = 1
         refunded_now = False
         refunded = m["refunded"]
-        if not refunded and consecutive >= m["threshold"]:
+        # 仅真实押金(金额和门槛都>0)才触发退还
+        if not refunded and m["deposit"] > 0 and m["threshold"] > 0 and consecutive >= m["threshold"]:
             refunded = 1
             refunded_now = True
         c = self.conn.cursor()

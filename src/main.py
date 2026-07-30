@@ -1,7 +1,7 @@
-"""入口:默认启动 PyWebView 桌面窗口;加 --web 则以 HTTP Web 服务模式启动(浏览器可访问)。
+"""入口:以 HTTP Web 服务模式启动(浏览器可访问),配合 Cloudflare Tunnel 等穿透工具对外暴露。
 
-Web 模式会额外暴露一个 JSON API(POST /api {name, args}),前端在检测不到 pywebview 时自动回退到该接口,
-因此同一套前端既能在桌面窗口运行,也能在浏览器里检查。
+暴露一个 JSON API(POST /api {name, args}),前端通过 fetch 调用。
+桌面 PyWebView GUI 已移除,纯 Web 部署,便于在服务器 / 云上长期运行,无需任何 GUI 依赖。
 """
 from __future__ import annotations
 import os
@@ -12,10 +12,8 @@ import argparse
 # 确保 src/ 在路径中,保证 `from backend.xxx` 可用
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import webview
 from backend.api import API
 
-INDEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "index.html")
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -28,7 +26,7 @@ def _free_port() -> int:
     return port
 
 
-def run_web(port: int = 0):
+def run_web(port: int = 0, host: str = "127.0.0.1"):
     import http.server
     import json
 
@@ -76,15 +74,17 @@ def run_web(port: int = 0):
 
     if not port:
         port = _free_port()
-    server = http.server.ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    server = http.server.ThreadingHTTPServer((host, port), Handler)
     url = f"http://127.0.0.1:{port}"
+    if host not in ("127.0.0.1", "localhost"):
+        print("[WARN] 正在监听非本机地址,局域网内其他设备可访问你的数据,请仅在调试小程序时使用 --host。")
     # 把访问地址写到文件,方便脚本/用户直接拿到(后台启动时不会刷屏)
     try:
         with open(os.path.join(os.path.dirname(HERE), "web_url.txt"), "w", encoding="utf-8") as f:
             f.write(url)
     except Exception:
         pass
-    print(f"\n✅ 小助手已启动(Web 模式): {url}")
+    print(f"\n[OK] 小助手已启动(Web 模式): {url}")
     print("   按 Ctrl+C 停止。\n")
     try:
         server.serve_forever()
@@ -93,27 +93,13 @@ def run_web(port: int = 0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="小助手 · AI 人生教练")
-    parser.add_argument("--web", action="store_true", help="以 HTTP Web 服务模式启动(浏览器可访问)")
-    parser.add_argument("--port", type=int, default=0, help="Web 模式监听端口(0=自动选空闲端口)")
+    parser = argparse.ArgumentParser(description="小助手 · AI 人生教练 (Web)")
+    parser.add_argument("--port", type=int, default=0,
+                        help="监听端口(0=自动选空闲端口,建议固定如 8000 以配合隧道)")
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="监听地址(默认仅本机;配合 Cloudflare Tunnel 等穿透工具无需改成 0.0.0.0)")
     args = parser.parse_args()
-
-    if args.web:
-        run_web(args.port)
-        return
-
-    # 默认:PyWebView 桌面窗口
-    api = API()
-    window = webview.create_window(
-        title="小助手 · AI 人生教练",
-        url=INDEX,
-        js_api=api,
-        width=1080,
-        height=720,
-        min_size=(900, 600),
-    )
-
-    webview.start(gui=None)
+    run_web(args.port, args.host)
 
 
 if __name__ == "__main__":

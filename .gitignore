@@ -14,3 +14,8 @@ src/config.json
 # 操作系统
 .DS_Store
 Thumbs.db
+
+# 运行时日志与临时产物（不要提交）
+*.log
+_pub_*
+_t_*

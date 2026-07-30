@@ -8,16 +8,17 @@
 </head>
 <body>
   <div id="toast" class="toast hidden"></div>
+  <div id="celebrate" class="celebrate hidden"><div class="cele-card" id="celeCard"></div></div>
 
   <div class="app">
     <aside class="sidebar">
       <div class="brand">🌱 小助手</div>
       <nav>
-        <button class="nav-item active" data-view="goal">🎯 目标</button>
-        <button class="nav-item" data-view="plan">🗂️ 计划</button>
+        <button class="nav-item active" data-view="today">☀️ 今天</button>
         <button class="nav-item" data-view="chat">💬 对话</button>
+        <button class="nav-item" data-view="plan">🗂️ 计划</button>
         <button class="nav-item" data-view="calendar">📅 日历</button>
-        <button class="nav-item" data-view="checkin">✅ 打卡</button>
+        <button class="nav-item" data-view="goal">🎯 目标</button>
         <button class="nav-item" data-view="progress">📈 进度</button>
         <button class="nav-item" data-view="settings">⚙️ 设置</button>
       </nav>
@@ -29,37 +30,47 @@
     </aside>
 
     <main class="content">
-      <!-- 目标 -->
-      <section class="view active" id="view-goal">
-        <h1>立一个"宏大"的目标</h1>
-        <p class="sub">越空越好——"减肥""赚钱""学 AI 编程"。我会先和你多聊几句,把目标问清楚,再生成一份可量化的计划。</p>
-
-        <div id="goalList" class="goal-list"></div>
-
-        <div class="goal-new">
-          <textarea id="goalInput" placeholder="例如:我想三个月内瘦下来,还想顺便学点 AI 编程"></textarea>
-          <button id="goalBtn" class="primary">开始共创(多轮对话)</button>
+      <!-- ☀️ 今天(首页) -->
+      <section class="view active" id="view-today">
+        <div class="today-head">
+          <div>
+            <h1 id="todayTitle">今天</h1>
+            <p class="sub" id="todaySub">加载中…</p>
+          </div>
+          <div class="streak-badge" id="streakBadge"></div>
         </div>
+        <div class="today-progress"><div class="tp-fill" id="todayFill"></div></div>
+        <div id="todayList" class="today-list"></div>
 
-        <h3 class="mt">选择你的 AI 教练人设</h3>
-        <div id="personaChips" class="chips"></div>
-      </section>
-
-      <!-- 计划 -->
-      <section class="view" id="view-plan">
-        <h1>落地计划</h1>
-        <p class="sub">每天只跟"今天那一件最小的事"较劲。勾掉做完的,觉得太难/太松就告诉我。</p>
-        <div id="planList" class="plan-list"></div>
-        <div class="adapt-box">
-          <input id="adaptInput" placeholder="反馈:比如「太难了,减少点」或「太简单,加点量」" />
-          <button id="adaptBtn">调整计划</button>
+        <div class="today-checkin card" id="todayCheckin">
+          <h3>今日打卡</h3>
+          <div class="moods">
+            <button class="mood" data-mood="great">😄 状态不错</button>
+            <button class="mood" data-mood="ok">😐 一般般</button>
+            <button class="mood" data-mood="bad">😩 很累</button>
+          </div>
+          <textarea id="checkinNote" placeholder="今天发生了什么?有什么阻碍或收获?(教练会回应你写的内容)"></textarea>
+          <button id="checkinBtn" class="primary">提交打卡,听教练怎么说</button>
+          <div id="coachReply" class="coach-reply hidden"></div>
         </div>
       </section>
 
-      <!-- 对话 -->
+      <!-- 💬 对话 -->
       <section class="view" id="view-chat">
         <h1>和教练聊聊</h1>
-        <div id="onboardBanner" class="onboard-banner hidden">🤝 我们正在共创目标,把信息补全,我就能生成专属计划。</div>
+        <div id="onboardBanner" class="onboard-banner hidden">
+          <div class="ob-row">
+            <span id="obText">🤝 目标共创中</span>
+            <button id="obSkip" class="ghost-btn">直接生成计划 →</button>
+          </div>
+          <div class="ob-steps" id="obSteps"></div>
+        </div>
+        <div id="styleCards" class="style-cards hidden">
+          <div class="sc" data-style="workout_buddy">🤝<b>运动搭子</b><span>像朋友一起练,互相打卡</span></div>
+          <div class="sc" data-style="idol">⭐<b>偶像</b><span>用你偶像的口吻激励你</span></div>
+          <div class="sc" data-style="strict">📏<b>严师</b><span>严格督促,不留情面</span></div>
+          <div class="sc" data-style="warm">🫶<b>温柔陪伴</b><span>先共情,再鼓励</span></div>
+        </div>
         <div id="chatBox" class="chat-box"></div>
         <div class="chat-input">
           <label class="img-btn" title="发图片(如吃饭拍照)">📷
@@ -71,10 +82,21 @@
         </div>
       </section>
 
-      <!-- 日历 -->
+      <!-- 🗂️ 计划 -->
+      <section class="view" id="view-plan">
+        <h1>落地计划</h1>
+        <p class="sub">每天只跟"今天那一件最小的事"较劲。勾掉做完的,觉得太难/太松就告诉我。</p>
+        <div id="planList" class="plan-list"></div>
+        <div class="adapt-box">
+          <input id="adaptInput" placeholder="反馈:比如「太难了,减少点」或「太简单,加点量」" />
+          <button id="adaptBtn">调整计划</button>
+        </div>
+      </section>
+
+      <!-- 📅 日历 -->
       <section class="view" id="view-calendar">
         <h1>日历</h1>
-        <p class="sub">所有目标的每日任务都汇到这里。点某天看当天要做什么。</p>
+        <p class="sub">所有目标的任务都汇到这里。点某天看当天要做什么。</p>
         <div class="cal-head">
           <button id="calPrev">‹</button>
           <span id="calTitle"></span>
@@ -84,45 +106,55 @@
         <div id="calInfo" class="cal-info"></div>
       </section>
 
-      <!-- 打卡 -->
-      <section class="view" id="view-checkin">
-        <h1>每日打卡</h1>
-        <p class="sub">诚实就好。今天状态如何?</p>
-        <div class="moods">
-          <button class="mood" data-mood="great">😄 不错</button>
-          <button class="mood" data-mood="ok">😐 还行</button>
-          <button class="mood" data-mood="bad">😩 拉胯</button>
+      <!-- 🎯 目标 -->
+      <section class="view" id="view-goal">
+        <h1>立一个"宏大"的目标</h1>
+        <p class="sub">越空越好——"减肥""赚钱""学 AI 编程"。我会先和你多聊几句,把目标问清楚,再生成一份可量化的计划。</p>
+
+        <div id="goalList" class="goal-list"></div>
+
+        <div class="goal-new card">
+          <textarea id="goalInput" placeholder="例如:我想三个月内瘦下来,还想顺便学点 AI 编程"></textarea>
+          <button id="goalBtn" class="primary">开始共创(多轮对话)</button>
         </div>
-        <div id="checkinTasks" class="checkin-tasks"></div>
-        <textarea id="checkinNote" placeholder="今天发生了什么?有什么阻碍或收获?"></textarea>
-        <button id="checkinBtn" class="primary">提交打卡</button>
+
+        <h3 class="mt">选择你的 AI 教练人设</h3>
+        <div id="personaChips" class="chips"></div>
       </section>
 
-      <!-- 进度 / 粘性 -->
+      <!-- 📈 进度 -->
       <section class="view" id="view-progress">
-        <h1>进度与粘性</h1>
-        <p class="sub">押金退款机制:先押一笔(虚拟币),连续签到达标后全额退还——用"沉没成本"把你拽回来每天打卡。</p>
-        <div id="memberCard" class="member-card"></div>
-        <div class="subscribe-box hidden" id="subBox">
-          <span>押金(虚拟币)</span>
-          <input id="depInput" type="number" min="1" value="21" />
-          <button id="subBtn">开通(押金)</button>
+        <h1>进度与坚持</h1>
+
+        <div id="memberCard" class="member-card card"></div>
+        <div class="subscribe-box card hidden" id="subBox">
+          <h3>🔥 押金挑战</h3>
+          <p class="sub">先押一笔(模拟账本),连续打卡达标后全额退还——用"沉没成本"把你拽回来。</p>
+          <div class="sub-row">
+            <label>押金 <input id="depInput" type="number" min="1" value="99" /> 元</label>
+            <label>连续 <input id="thrInput" type="number" min="3" value="21" /> 天退还</label>
+            <button id="subBtn" class="primary">开通挑战</button>
+          </div>
         </div>
 
-        <h3 class="mt">教练的长期观察</h3>
-        <p class="sub">每天/每周自动把你的进展压成结构化摘要,跨天跨周都记得你——这是接真 LLM 后的长期记忆底座。</p>
+        <h3 class="mt">⏰ 提醒设置</h3>
+        <p class="sub">每条提醒都可以改时间或关掉。</p>
+        <div id="reminderList" class="reminder-list"></div>
+
+        <h3 class="mt">🧠 教练的长期观察</h3>
+        <p class="sub">每打卡 3 次,教练会写下对你的观察——他记得你。</p>
         <div id="summaryList" class="summary-list"></div>
       </section>
 
-      <!-- 设置 -->
+      <!-- ⚙️ 设置 -->
       <section class="view" id="view-settings">
         <h1>设置</h1>
-        <p class="sub">选择 AI 引擎。填好 API Key 后自动切换为真实大模型(兼容 OpenAI / DeepSeek / 通义 / 本地 Ollama 等)。留空则继续用内置模板(离线可用)。</p>
+        <p class="sub">填好 API Key 后自动切换为真实大模型(兼容 OpenAI / DeepSeek / 通义 / 本地 Ollama)。留空则用内置模板(离线可用)。</p>
 
         <div class="setting-row">
           <label>引擎模式</label>
           <select id="cfgEngine">
-            <option value="auto">自动(有 Key 用真实模型,否则用内置模板)</option>
+            <option value="auto">自动(有 Key 用真实模型,否则内置模板)</option>
             <option value="mock">仅内置模板(离线)</option>
             <option value="llm">强制真实模型</option>
           </select>
@@ -147,7 +179,7 @@
           <label>看图(Vision)</label>
           <select id="cfgVision">
             <option value="false">关闭(文本模型)</option>
-            <option value="true">开启(需支持视觉的模型,如 deepseek-vl)</option>
+            <option value="true">开启(需支持视觉的模型)</option>
           </select>
         </div>
         <div class="setting-row">
@@ -156,7 +188,10 @@
         </div>
 
         <div id="cfgStatus" class="cfg-status"></div>
-        <button id="cfgSave" class="primary">保存并重载引擎</button>
+        <div class="btn-row">
+          <button id="cfgSave" class="primary">保存并重载引擎</button>
+          <button id="cfgTest">测试连接</button>
+        </div>
       </section>
     </main>
   </div>

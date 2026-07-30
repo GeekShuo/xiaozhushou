@@ -1,2 +1,2 @@
-pywebview>=5.0
-plyer>=2.1
+# 纯 Web 部署:仅依赖 Python 标准库(http.server / sqlite3 / json ...)。
+# PyWebView(GUI 桌面壳)与 plyer(桌面通知)已移除,无需任何第三方依赖。
